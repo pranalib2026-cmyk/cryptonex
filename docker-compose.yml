@@ -1,0 +1,226 @@
+# ═══════════════════════════════════════════════════════════
+#  CryptoNex — Docker Compose (Production)
+#  Services: nginx · frontend · backend · analysis · mongo · postgres · redis
+#  All services include health checks, restart policies, volumes
+# ═══════════════════════════════════════════════════════════
+
+version: "3.9"
+
+services:
+
+  # ─── Nginx Reverse Proxy ────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: cryptonex-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      analysis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ─── Frontend (Static HTML/CSS/JS via Nginx) ────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    container_name: cryptonex-frontend
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ─── Backend (Node.js + Express + WebSocket) ────────────
+  backend:
+    build:
+      context: ./server
+      dockerfile: ../infrastructure/docker/Dockerfile.backend
+      target: production
+    container_name: cryptonex-backend
+    expose:
+      - "4000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongo:27017/cryptonex
+      - POSTGRES_URL=postgresql://${POSTGRES_USER:-cryptonex}:${POSTGRES_PASSWORD:-cryptonex}@postgres:5432/${POSTGRES_DB:-cryptonex}
+      - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=http://frontend:3000
+      - ANALYSIS_ENGINE_URL=http://analysis:8000
+    depends_on:
+      mongo:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  # ─── Analysis Engine (Python FastAPI) ───────────────────
+  analysis:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.analysis
+    container_name: cryptonex-analysis
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - MONGODB_URI=mongodb://mongo:27017/cryptonex
+      - POSTGRES_URL=postgresql://${POSTGRES_USER:-cryptonex}:${POSTGRES_PASSWORD:-cryptonex}@postgres:5432/${POSTGRES_DB:-cryptonex}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.5"
+
+  # ─── MongoDB (Primary document store) ───────────────────
+  mongo:
+    image: mongo:7
+    container_name: cryptonex-mongo
+    expose:
+      - "27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./infrastructure/db/mongo-init.js:/docker-entrypoint-initdb.d/init.js:ro
+    environment:
+      - MONGO_INITDB_DATABASE=cryptonex
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ─── PostgreSQL (Relational store — portfolio, users) ────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cryptonex-postgres
+    expose:
+      - "5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/db/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-cryptonex}
+      - POSTGRES_USER=${POSTGRES_USER:-cryptonex}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cryptonex}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cryptonex} -d ${POSTGRES_DB:-cryptonex}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ─── Redis (Cache + Pub/Sub) ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cryptonex-redis
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+    restart: unless-stopped
+    networks:
+      - cryptonex-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+# ─── Volumes ──────────────────────────────────────────────
+volumes:
+  mongo-data:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  nginx-logs:
+    driver: local
+
+# ─── Networks ─────────────────────────────────────────────
+networks:
+  cryptonex-net:
+    driver: bridge
+    name: cryptonex-network

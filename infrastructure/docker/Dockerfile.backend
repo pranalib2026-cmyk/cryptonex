@@ -1,0 +1,36 @@
+# ═══════════════════════════════════════════
+# Dockerfile — Backend (Node.js + Express)
+# Multi-stage: dev & production
+# ═══════════════════════════════════════════
+
+# ─── Development stage ────────────────────
+FROM node:20-alpine AS development
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+EXPOSE 4000
+CMD ["node", "--watch", "server.js"]
+
+# ─── Production stage ─────────────────────
+FROM node:20-alpine AS production
+WORKDIR /app
+
+# Security: run as non-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S cryptonex -u 1001
+
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY . .
+
+# Drop privileges
+USER cryptonex
+
+EXPOSE 4000
+
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=15s \
+    CMD wget --spider -q http://localhost:4000/api/health || exit 1
+
+CMD ["node", "server.js"]

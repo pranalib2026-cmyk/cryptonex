@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker volumes
+mongo-data/
+redis-data/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+
+# SSL certs (keep in secrets)
+infrastructure/nginx/ssl/*.pem
+infrastructure/nginx/ssl/*.key
+
+# Coverage
+coverage/
+.nyc_output/

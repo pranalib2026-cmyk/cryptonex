@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoNex — Real-Time Bitcoin Market Intelligence Dashboard</title>
+    <meta name="description" content="CryptoNex: Advanced Bitcoin Market Intelligence Dashboard with real-time price tracking, AI-powered analysis, sentiment metrics, and portfolio management.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ═══════════════ VIDEO BACKGROUND ═══════════════ -->
+    <div class="video-bg-wrap" aria-hidden="true">
+        <video class="video-bg" autoplay muted loop playsinline preload="auto" id="bgVideo">
+            <source src="bg-video.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <!-- ═══════════════ RAIN + COIN ANIMATION LAYER ═══════════════ -->
+    <div class="rain-container" id="rainContainer" aria-hidden="true"></div>
+    <div class="floating-coins" id="floatingCoins" aria-hidden="true"></div>
+
+    <!-- ═══════════════ NAVBAR ═══════════════ -->
+    <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-inner">
+            <a href="#" class="logo" aria-label="CryptoNex Home">
+                <span class="logo-icon">₿</span>
+                <span class="logo-text">CryptoNex</span>
+            </a>
+            <ul class="nav-links" id="navLinks" role="menubar">
+                <li role="none"><a href="#hero" class="nav-link active" role="menuitem">Dashboard</a></li>
+                <li role="none"><a href="#market-overview" class="nav-link" role="menuitem">Markets</a></li>
+                <li role="none"><a href="#dashboard-grid" class="nav-link" role="menuitem">Analysis</a></li>
+                <li role="none"><a href="#news" class="nav-link" role="menuitem">News</a></li>
+                <li role="none"><a href="#portfolio" class="nav-link" role="menuitem">Portfolio</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="live-price-badge" aria-label="Live Bitcoin price">
+                    <span class="live-dot"></span>
+                    <span class="live-label">BTC</span>
+                    <span class="live-value" id="navBtcPrice">$68,432.17</span>
+                </div>
+                <button class="btn-wallet" id="connectWallet" aria-label="Connect cryptocurrency wallet">
+                    <span class="wallet-icon">⬡</span> Connect Wallet
+                </button>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+        <!-- TICKER STRIP -->
+        <div class="ticker-strip" aria-label="Market ticker">
+            <div class="ticker-track" id="tickerTrack"></div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════ HERO SECTION ═══════════════ -->
+    <section class="hero" id="hero" aria-labelledby="heroHeading">
+        <div class="hero-content">
+            <p class="hero-tag">⚡ Live Market Intelligence</p>
+            <h1 class="hero-title" id="heroHeading">Real-Time<br><span class="gradient-text">Bitcoin Intelligence</span></h1>
+            <p class="hero-sub">AI-powered analytics, sentiment tracking, and predictive signals to navigate the crypto market with precision.</p>
+            <div class="hero-stats">
+                <div class="hero-price-block">
+                    <span class="hero-price-label">BTC / USD</span>
+                    <span class="hero-price" id="heroBtcPrice">$68,432.17</span>
+                    <span class="hero-change positive" id="heroBtcChange">+2.34%&nbsp;↑</span>
+                </div>
+                <div class="hero-gauge">
+                    <span class="gauge-label">Fear & Greed Index</span>
+                    <div class="arc-gauge" id="fearGreedGauge" role="meter" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100" aria-label="Fear and Greed Index">
+                        <svg viewBox="0 0 200 120" class="gauge-svg">
+                            <defs>
+                                <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#ef4444"/>
+                                    <stop offset="25%" stop-color="#f97316"/>
+                                    <stop offset="50%" stop-color="#eab308"/>
+                                    <stop offset="75%" stop-color="#22c55e"/>
+                                    <stop offset="100%" stop-color="#06b6d4"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                            <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" class="gauge-fill" id="gaugeFill"/>
+                            <circle cx="100" cy="100" r="4" fill="#fff" class="gauge-needle" id="gaugeNeedle"/>
+                        </svg>
+                        <div class="gauge-value" id="gaugeValue">72</div>
+                        <div class="gauge-sentiment" id="gaugeSentiment">Greed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ MARKET OVERVIEW ROW ═══════════════ -->
+    <section class="section market-overview" id="market-overview" aria-labelledby="marketHeading">
+        <div class="container">
+            <h2 class="section-title" id="marketHeading"><span class="title-accent">◆</span> Market Overview</h2>
+            <div class="market-cards" id="marketCards">
+                <!-- Cards injected by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ MAIN DASHBOARD GRID ═══════════════ -->
+    <section class="section dashboard-grid" id="dashboard-grid" aria-labelledby="dashHeading">
+        <div class="container">
+            <h2 class="section-title" id="dashHeading"><span class="title-accent">◆</span> Market Analysis</h2>
+            <div class="dash-grid">
+                <!-- LEFT: Chart -->
+                <div class="glass-card chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">BTC/USD Price Chart</h3>
+                        <div class="timeframe-btns" role="group" aria-label="Chart timeframe">
+                            <button class="tf-btn" data-tf="1H">1H</button>
+                            <button class="tf-btn active" data-tf="4H">4H</button>
+                            <button class="tf-btn" data-tf="1D">1D</button>
+                            <button class="tf-btn" data-tf="1W">1W</button>
+                            <button class="tf-btn" data-tf="1M">1M</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceChart" aria-label="Bitcoin price candlestick chart"></canvas>
+                    </div>
+                    <div class="volume-container">
+                        <canvas id="volumeChart" aria-label="Trading volume chart"></canvas>
+                    </div>
+                </div>
+                <!-- RIGHT: AI Panel -->
+                <div class="glass-card ai-panel">
+                    <div class="card-header">
+                        <h3 class="card-title">AI Market Intelligence</h3>
+                        <div class="ai-signal-badge bullish" id="aiSignalBadge" role="status" aria-label="AI Market Signal: Bullish">
+                            <span class="signal-dot"></span>
+                            <span class="signal-text">Bullish</span>
+                        </div>
+                    </div>
+                    <div class="ai-metrics">
+                        <div class="ai-metric">
+                            <span class="metric-label">Support Level</span>
+                            <span class="metric-value" id="supportLevel">$66,800</span>
+                        </div>
+                        <div class="ai-metric">
+                            <span class="metric-label">Resistance Level</span>
+                            <span class="metric-value" id="resistanceLevel">$70,200</span>
+                        </div>
+                        <div class="ai-metric">
+                            <span class="metric-label">RSI (14)</span>
+                            <div class="rsi-bar-wrap">
+                                <div class="rsi-bar" id="rsiBar" style="width:62%"></div>
+                                <span class="rsi-val" id="rsiVal">62.4</span>
+                            </div>
+                        </div>
+                        <div class="ai-metric">
+                            <span class="metric-label">MACD Signal</span>
+                            <span class="metric-value positive" id="macdSignal">Bullish Cross ↑</span>
+                        </div>
+                        <div class="ai-metric">
+                            <span class="metric-label">Volume Trend</span>
+                            <span class="metric-value" id="volumeTrend">Above Average</span>
+                        </div>
+                        <div class="ai-metric">
+                            <span class="metric-label">Market Phase</span>
+                            <span class="metric-value accent" id="marketPhase">Accumulation</span>
+                        </div>
+                    </div>
+                    <div class="prediction-section">
+                        <h4 class="sub-title">7-Day Price Prediction</h4>
+                        <canvas id="predictionChart" aria-label="7-day price prediction chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ MARKET SENTIMENT ROW ═══════════════ -->
+    <section class="section sentiment-section" id="sentiment" aria-labelledby="sentimentHeading">
+        <div class="container">
+            <h2 class="section-title" id="sentimentHeading"><span class="title-accent">◆</span> Market Sentiment</h2>
+            <div class="sentiment-grid">
+                <!-- Fear & Greed Full -->
+                <div class="glass-card sentiment-card">
+                    <h4 class="card-title-sm">Fear & Greed Index</h4>
+                    <div class="sentiment-gauge-full">
+                        <svg viewBox="0 0 200 120" class="gauge-svg-full">
+                            <defs>
+                                <linearGradient id="gaugeGradFull" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#ef4444"/>
+                                    <stop offset="30%" stop-color="#f97316"/>
+                                    <stop offset="50%" stop-color="#eab308"/>
+                                    <stop offset="70%" stop-color="#22c55e"/>
+                                    <stop offset="100%" stop-color="#06b6d4"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGradFull)" stroke-width="16" stroke-linecap="round" class="gauge-fill" id="gaugeFillFull"/>
+                            <circle cx="100" cy="100" r="5" fill="#fff" class="gauge-needle" id="gaugeNeedleFull"/>
+                        </svg>
+                        <div class="gauge-center-val" id="fgFullVal">72</div>
+                        <div class="gauge-center-label" id="fgFullLabel">Greed</div>
+                    </div>
+                    <div class="fg-history">
+                        <span class="fg-hist-item"><b>Yesterday:</b> 68</span>
+                        <span class="fg-hist-item"><b>Last Week:</b> 55</span>
+                        <span class="fg-hist-item"><b>Last Month:</b> 44</span>
+                    </div>
+                </div>
+                <!-- Social Sentiment -->
+                <div class="glass-card sentiment-card">
+                    <h4 class="card-title-sm">Social Sentiment</h4>
+                    <div class="social-meters">
+                        <div class="social-row">
+                            <span class="social-platform">𝕏 / Twitter</span>
+                            <div class="social-bar-wrap"><div class="social-bar" style="width:78%;" data-val="78"></div></div>
+                            <span class="social-score positive">78%</span>
+                        </div>
+                        <div class="social-row">
+                            <span class="social-platform">Reddit</span>
+                            <div class="social-bar-wrap"><div class="social-bar reddit" style="width:65%;" data-val="65"></div></div>
+                            <span class="social-score positive">65%</span>
+                        </div>
+                        <div class="social-row">
+                            <span class="social-platform">Telegram</span>
+                            <div class="social-bar-wrap"><div class="social-bar telegram" style="width:82%;" data-val="82"></div></div>
+                            <span class="social-score positive">82%</span>
+                        </div>
+                    </div>
+                    <div class="trending-tags">
+                        <span class="tag">#Bitcoin</span>
+                        <span class="tag">#BTC</span>
+                        <span class="tag">#Halving</span>
+                        <span class="tag">#Bullrun</span>
+                        <span class="tag">#Crypto</span>
+                    </div>
+                </div>
+                <!-- Whale Alert -->
+                <div class="glass-card sentiment-card">
+                    <h4 class="card-title-sm">🐋 Whale Alert</h4>
+                    <div class="whale-feed" id="whaleFeed">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+                <!-- Exchange Flow -->
+                <div class="glass-card sentiment-card">
+                    <h4 class="card-title-sm">Exchange Inflow / Outflow</h4>
+                    <div class="flow-chart-wrap">
+                        <canvas id="flowChart" aria-label="Exchange inflow outflow chart"></canvas>
+                    </div>
+                    <div class="flow-summary">
+                        <div class="flow-item inflow">
+                            <span class="flow-label">Inflow (24h)</span>
+                            <span class="flow-val">12,482 BTC</span>
+                        </div>
+                        <div class="flow-item outflow">
+                            <span class="flow-label">Outflow (24h)</span>
+                            <span class="flow-val">18,204 BTC</span>
+                        </div>
+                        <div class="flow-item net">
+                            <span class="flow-label">Net Flow</span>
+                            <span class="flow-val positive">−5,722 BTC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ NEWS FEED ═══════════════ -->
+    <section class="section news-section" id="news" aria-labelledby="newsHeading">
+        <div class="container">
+            <h2 class="section-title" id="newsHeading"><span class="title-accent">◆</span> Latest News</h2>
+            <div class="news-grid" id="newsGrid">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ PORTFOLIO TRACKER ═══════════════ -->
+    <section class="section portfolio-section" id="portfolio" aria-labelledby="portfolioHeading">
+        <div class="container">
+            <h2 class="section-title" id="portfolioHeading"><span class="title-accent">◆</span> Portfolio Tracker</h2>
+            <div class="portfolio-grid">
+                <div class="glass-card portfolio-chart-card">
+                    <h4 class="card-title-sm">Allocation</h4>
+                    <canvas id="donutChart" aria-label="Portfolio allocation donut chart"></canvas>
+                    <div class="donut-legend" id="donutLegend"></div>
+                </div>
+                <div class="glass-card portfolio-table-card">
+                    <div class="card-header">
+                        <h4 class="card-title-sm">Holdings</h4>
+                        <button class="btn-add-coin" id="btnAddCoin" aria-label="Add coin to portfolio">+ Add Coin</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="portfolio-table" aria-label="Portfolio holdings">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Holdings</th>
+                                    <th>Avg. Buy</th>
+                                    <th>Current</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioBody">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ FOOTER ═══════════════ -->
+    <footer class="footer" role="contentinfo">
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <span class="logo-icon">₿</span>
+                <span class="logo-text">CryptoNex</span>
+                <p class="footer-desc">AI-powered Bitcoin Market Intelligence Platform. Real-time analytics for the modern trader.</p>
+            </div>
+            <div class="footer-links-group">
+                <h5>Product</h5>
+                <a href="#">Dashboard</a>
+                <a href="#">Markets</a>
+                <a href="#">Portfolio</a>
+                <a href="#">API</a>
+            </div>
+            <div class="footer-links-group">
+                <h5>Resources</h5>
+                <a href="#">Documentation</a>
+                <a href="#">Blog</a>
+                <a href="#">Support</a>
+                <a href="#">Status</a>
+            </div>
+            <div class="footer-links-group">
+                <h5>Connect</h5>
+                <div class="social-icons">
+                    <a href="#" aria-label="Twitter"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+                    <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg></a>
+                    <a href="#" aria-label="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></a>
+                    <a href="#" aria-label="Telegram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 CryptoNex. All rights reserved. Data is for informational purposes only — not financial advice.</p>
+        </div>
+    </footer>
+
+    <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
+        <a href="#hero" class="mb-nav-item active" aria-label="Dashboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Dashboard</span>
+        </a>
+        <a href="#market-overview" class="mb-nav-item" aria-label="Markets">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Markets</span>
+        </a>
+        <a href="#dashboard-grid" class="mb-nav-item" aria-label="Analysis">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span>Analysis</span>
+        </a>
+        <a href="#news" class="mb-nav-item" aria-label="News">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+            <span>News</span>
+        </a>
+        <a href="#portfolio" class="mb-nav-item" aria-label="Portfolio">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 1 0 0 4h4v-4Z"/></svg>
+            <span>Portfolio</span>
+        </a>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+</html>

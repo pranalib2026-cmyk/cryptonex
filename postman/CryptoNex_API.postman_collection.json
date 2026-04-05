@@ -1,0 +1,235 @@
+{
+	"info": {
+		"_postman_id": "cryptonex-2026",
+		"name": "CryptoNex API — Bitcoin Market Intelligence",
+		"description": "Complete API collection for the CryptoNex real-time Bitcoin Market Intelligence Platform.\n\nBase URL: http://localhost:3001\nWebSocket: ws://localhost:3001/ws",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001"
+		}
+	],
+	"item": [
+		{
+			"name": "Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "health"]
+						},
+						"description": "Returns server uptime, WebSocket client count, and timestamp."
+					}
+				}
+			]
+		},
+		{
+			"name": "Prices",
+			"item": [
+				{
+					"name": "Get Live BTC Price",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/prices",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "prices"]
+						},
+						"description": "Returns current BTC price in USD/INR, market cap, 24h volume, 24h change, and live Binance candle."
+					}
+				},
+				{
+					"name": "Get Price History (7d)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/prices/history?days=7",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "prices", "history"],
+							"query": [{ "key": "days", "value": "7" }]
+						},
+						"description": "Returns BTC price + volume history. Supported: 1, 7, 14, 30, 90, 180, 365."
+					}
+				},
+				{
+					"name": "Get Price History (30d)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/prices/history?days=30",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "prices", "history"],
+							"query": [{ "key": "days", "value": "30" }]
+						}
+					}
+				},
+				{
+					"name": "Get Live Candles (OHLCV)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/prices/candles?limit=100",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "prices", "candles"],
+							"query": [{ "key": "limit", "value": "100" }]
+						},
+						"description": "Returns recent 1-minute OHLCV candles from Binance stream. Max 500."
+					}
+				}
+			]
+		},
+		{
+			"name": "Market Overview",
+			"item": [
+				{
+					"name": "Get All Market Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/market-overview",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "market-overview"]
+						},
+						"description": "Returns crypto prices (BTC, ETH, BNB, SOL, DOGE), USD/INR, Gold, Nifty 50, Sensex — all in one call."
+					}
+				}
+			]
+		},
+		{
+			"name": "News",
+			"item": [
+				{
+					"name": "Get Crypto News",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/news?limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "news"],
+							"query": [{ "key": "limit", "value": "10" }]
+						},
+						"description": "Returns latest crypto news articles with sentiment tags (bullish/bearish/neutral) and scores."
+					}
+				}
+			]
+		},
+		{
+			"name": "Sentiment",
+			"item": [
+				{
+					"name": "Get Market Sentiment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sentiment",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sentiment"]
+						},
+						"description": "Returns Fear & Greed Index (30-day history), Whale Alert feed, and social media sentiment breakdown."
+					}
+				}
+			]
+		},
+		{
+			"name": "Technical Indicators",
+			"item": [
+				{
+					"name": "Get All Indicators",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/indicators",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "indicators"]
+						},
+						"description": "Returns RSI (14), MACD (12,26,9), Bollinger Bands (20,2), EMA 50/200, VWAP, ATR (14), and overall signal summary."
+					}
+				}
+			]
+		},
+		{
+			"name": "Portfolio",
+			"item": [
+				{
+					"name": "Get Portfolio",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/portfolio",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "portfolio"]
+						},
+						"description": "Returns all holdings for the default user."
+					}
+				},
+				{
+					"name": "Add Holding",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"coin\": \"BTC\",\n    \"coinName\": \"Bitcoin\",\n    \"quantity\": 0.5,\n    \"buyPrice\": 65000,\n    \"buyDate\": \"2024-03-15\",\n    \"notes\": \"DCA purchase\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/portfolio",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "portfolio"]
+						},
+						"description": "Adds a new coin holding. Required fields: coin, quantity, buyPrice."
+					}
+				},
+				{
+					"name": "Update Holding",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 0.75,\n    \"notes\": \"Added more via DCA\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/portfolio/REPLACE_WITH_HOLDING_ID",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "portfolio", "REPLACE_WITH_HOLDING_ID"]
+						},
+						"description": "Updates an existing holding by ID."
+					}
+				},
+				{
+					"name": "Delete Holding",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/portfolio/REPLACE_WITH_HOLDING_ID",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "portfolio", "REPLACE_WITH_HOLDING_ID"]
+						},
+						"description": "Removes a holding by ID."
+					}
+				}
+			]
+		}
+	]
+}

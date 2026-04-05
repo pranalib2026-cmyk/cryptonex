@@ -1,0 +1,194 @@
+# ═══════════════════════════════════════════════════════════
+#  CryptoNex — Docker Compose (Development)
+#  Hot-reload on all services, all ports exposed, DB admin UIs
+# ═══════════════════════════════════════════════════════════
+
+version: "3.9"
+
+services:
+
+  # ─── Frontend Dev (static via http-server) ──────────────
+  frontend:
+    image: node:20-alpine
+    container_name: cryptonex-frontend-dev
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: npx -y http-server . -p 3000 --cors -c-1
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+
+  # ─── Backend Dev (hot-reload via --watch) ───────────────
+  backend:
+    build:
+      context: ./server
+      dockerfile: ../infrastructure/docker/Dockerfile.backend
+      target: development
+    container_name: cryptonex-backend-dev
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongo:27017/cryptonex
+      - POSTGRES_URL=postgresql://cryptonex:s3OkWwnuAP$rJL5=2vhZ-@bd@postgres:5432/cryptonex
+      - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=http://localhost:3000
+      - ANALYSIS_ENGINE_URL=http://analysis:8000
+    depends_on:
+      mongo:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+    command: node --watch server.js
+
+  # ─── Analysis Engine Dev (--reload) ─────────────────────
+  analysis:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.analysis
+    container_name: cryptonex-analysis-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./analysis-engine:/app
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ─── MongoDB Dev ────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: cryptonex-mongo-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-dev-data:/data/db
+      - ./infrastructure/db/mongo-init.js:/docker-entrypoint-initdb.d/init.js:ro
+    environment:
+      - MONGO_INITDB_DATABASE=cryptonex
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── PostgreSQL Dev ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cryptonex-postgres-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./infrastructure/db/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      - POSTGRES_DB=cryptonex
+      - POSTGRES_USER=cryptonex
+      - POSTGRES_PASSWORD=s3OkWwnuAP$rJL5=2vhZ-@bd
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cryptonex -d cryptonex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Dev ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cryptonex-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ─── Mongo Express (MongoDB Admin UI) ───────────────────
+  mongo-express:
+    image: mongo-express:latest
+    container_name: cryptonex-db-admin
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017/
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+
+  # ─── pgAdmin (PostgreSQL Admin UI) ──────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cryptonex-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@cryptonex.local
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+
+  # ─── Redis Commander (Redis Admin UI) ───────────────────
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: cryptonex-redis-admin
+    ports:
+      - "8082:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - cryptonex-dev
+
+volumes:
+  mongo-dev-data:
+  postgres-dev-data:
+  redis-dev-data:
+
+networks:
+  cryptonex-dev:
+    driver: bridge
